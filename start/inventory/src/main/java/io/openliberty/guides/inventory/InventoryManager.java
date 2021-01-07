@@ -32,7 +32,8 @@ public class InventoryManager {
     
     private List<SystemData> systems = Collections.synchronizedList(new ArrayList<>());
     private SystemClient systemClient = new SystemClient();
-
+    @Inject
+    private Tracere tracer;
 
     public Properties get(String hostname) {
         systemClient.init(hostname, 9080);
@@ -48,10 +49,13 @@ public class InventoryManager {
 
         SystemData system = new SystemData(hostname, props);
         if (!systems.contains(system)) {
+        	try( Scope childScope = tracer.buildSpan("add() Span").startActive(true)){
                 systems.add(system);
+        	}
         }
     }
 
+    @Trace( value = true , operationName = "InventoryManager.list" )
     public InventoryList list() {
         return new InventoryList(systems);
     }
